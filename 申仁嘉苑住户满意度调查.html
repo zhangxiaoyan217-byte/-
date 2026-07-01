@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>申仁嘉苑住户满意度调查表</title>
+    <style>
+        /* 根级背景修复，彻底解决向下滚动产生巨大白底的问题 */
+        html { min-height: 100%; background-color: #f7f7f7; transition: all 2s ease-in-out; }
+        body { margin: 0; padding: 0; min-height: 100vh; font-family: "SimSun", "Songti SC", serif; color: #333; overflow-x: hidden; scroll-behavior: smooth; background: transparent; transition: all 2s ease-in-out; }
+        
+        /* 全局滤镜类 */
+        html.phase-0 { filter: none; }
+        html.phase-1 { filter: sepia(0.4) contrast(1.2) brightness(0.85); background-color: #1a1a1a; }
+        html.phase-2 { filter: sepia(0.9) hue-rotate(330deg) saturate(3) contrast(1.6) brightness(0.65); background-color: #030000; }
+
+        /* 问卷容器修复溢出 */
+        .container { max-width: 800px; margin: 40px auto; background: #fff; padding: 50px 50px 80px 50px; box-shadow: 0 0 15px rgba(0,0,0,0.1); border-top: 10px solid #aa0000; position: relative; transition: all 2s; overflow: visible; z-index: 5; }
+        
+        .header { text-align: center; border-bottom: 2px solid #aa0000; padding-bottom: 20px; margin-bottom: 30px; }
+        .header h1 { font-size: 28px; letter-spacing: 2px; color: #aa0000; transition: color 1s; }
+        .header p { font-size: 14px; color: #666; margin-top: 10px; }
+        .progress-bar { font-size: 16px; font-weight: bold; margin-bottom: 20px; color: #555; display: flex; justify-content: space-between; position: relative; z-index: 5; }
+        
+        /* 问卷区 */
+        .question-block { font-size: 18px; line-height: 2.2; margin-bottom: 40px; position: relative; }
+        .question-title { font-weight: bold; margin-bottom: 20px; transition: color 0.3s; word-break: break-all; overflow: visible; padding: 10px 0; }
+        .options { display: flex; flex-direction: column; gap: 15px; position: relative; z-index: 10; overflow: visible; }
+        
+        .option-btn { background: #f0f0f0; border: 1px solid #ccc; padding: 15px 20px; text-align: left; cursor: pointer; font-family: inherit; font-size: 16px; transition: background 0.3s, border-color 0.3s, color 0.3s; border-radius: 4px; z-index: 10; line-height: 1.8; overflow: hidden; position: relative; }
+        .option-btn:hover { background: #e0e0e0; border-color: #999; }
+        
+        /* 阶段三极度崩坏的恶心特制类 —— 破坏边框感 */
+        .gore-text-huge { font-size: 19px !important; font-weight: bold; line-height: 1.5; color: #aa0000; padding-left: 15px; border-left: 10px solid #800; overflow: visible !important; white-space: pre-wrap; word-break: break-all; }
+        .gore-text-huge.option-btn { background-color: #0c0000; border: 1px solid #300; color: #f00; box-shadow: 0 0 20px rgba(255,0,0,0.2); }
+        
+        /* 突破盒子界限的特殊修饰！让文字彻底流出按钮 */
+        .break-box { position: relative; margin-left: -30px; margin-right: -40px; margin-top: 10px; margin-bottom: 20px; padding: 30px !important; z-index: 99; transform: scale(1.05) rotate(-1deg); box-shadow: 10px 10px 40px rgba(255,0,0,0.5) !important; font-size: 22px !important; letter-spacing: -1px; }
+
+        /* 滑动条特制 */
+        .slider-container { display: flex; flex-direction: column; gap: 10px; }
+        input[type="range"] { width: 100%; cursor: pointer; height: 30px; }
+        .slider-val-box { font-size: 24px; font-weight: bold; text-align: center; color: #aa0000; padding: 20px; border: 2px dashed #aa0000; transition: all 0.2s; height: 35px; line-height: 35px; }
+
+        /* 抖动动画 */
+        .shaking { animation: shake 0.1s infinite; }
+        .tremble-mild { animation: tremble 0.1s infinite alternate; }
+        @keyframes shake {
+            0% { transform: translate(2px, 1px) rotate(0deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+        @keyframes tremble {
+            0% { transform: translate(1px, 0px); }
+            50% { transform: translate(-1px, 1px); }
+            100% { transform: translate(0px, -1px); }
+        }
+        
+        /* 视觉覆盖层 */
+        #peep-hole { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: radial-gradient(circle at center, transparent 15%, rgba(0,0,0,0.95) 45%, black 100%); pointer-events: none; z-index: 100; opacity: 0; transition: opacity 2s; }
+        #blood-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: red; pointer-events: none; z-index: 90; opacity: 0; transition: opacity 0.3s; mix-blend-mode: multiply; }
+        
+        /* 跳杀层 */
+        #jumpscare-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: black; z-index: 9999; display: none; align-items: center; justify-content: center; overflow: hidden; }
+        #jumpscare-img { width: 100vw; height: 100vh; object-fit: cover; }
+        .happy-text { position: absolute; font-size: 50px; font-weight: bold; color: red; user-select: none; z-index: 10000; animation: flash 0.1s infinite alternate; pointer-events: none; }
+        @keyframes flash { from { opacity: 1; } to { opacity: 0; } }
+        
+        /* 广告弹窗基类 */
+        .ad-popup { position: fixed; background: white; border: 2px solid #ccc; box-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 80; padding: 10px; transition: all 0.3s; }
+        .ad-close { float: right; cursor: pointer; color: #666; font-weight: bold; border: 1px solid #ccc; padding: 2px 6px; font-size: 14px; position: relative; z-index: 100; background: inherit; }
+        
+        /* 第一阶段正常右下角弹窗 */
+        #normal-ad { bottom: 20px; right: 20px; width: 320px; display: none; }
+
+        /* 开始按钮与结局 */
+        #start-btn { display: block; width: 200px; margin: 30px auto; background: #aa0000; color: white; border: none; padding: 15px; font-size: 18px; cursor: pointer; border-radius: 5px; transition: 0.3s; }
+        #start-btn:hover { background: #880000; }
+        #ending-screen { display: none; padding: 50px; text-align: center; }
+        .ending-text-flow { text-align: left; margin-top: 30px; font-size: 16px; line-height: 2; height: 60vh; overflow-y: auto; padding-right: 20px; word-break: break-all; overflow-x: hidden; }
+        
+        .glitch-text { color: red; font-weight: bold; text-shadow: 2px 0 0 blue, -2px 0 0 lime; display: inline-block; white-space: pre-wrap; word-break: break-all; max-width: 50%; text-align: right; }
+    </style>
+</head>
+<body class="phase-0">
+
+<div id="peep-hole"></div>
+<div id="blood-overlay"></div>
+
+<!-- 一阶段固定的假广告 -->
+<div id="normal-ad" class="ad-popup">
+    <div id="normal-ad-close" class="ad-close">关闭</div>
+    <div style="padding: 10px 0; text-align: left; cursor: pointer; clear: both;">
+        <h3 id="normal-ad-title" style="margin: 0 0 10px 0;"></h3>
+        <div id="normal-ad-desc"></div>
+    </div>
+</div>
+
+<div id="jumpscare-layer">
+    <img id="jumpscare-img" src="素材/cheche.gif" alt="scare">
+</div>
+
+<div class="container" id="main-container">
+    <div id="intro-screen">
+        <div class="header">
+            <h1>关于申仁嘉苑住户满意度的例行调查表</h1>
+            <p>【高度机密·匿名】 尊敬的住户，为提供更优质的物业服务，特下发此调查。您的回答对我们至关重要。</p>
+        </div>
+        <p style="text-indent: 2em; line-height: 2;">近期小区进行了一系列环境优化与安保升级，为了确保每一位业主都能享受到舒适、安心的居住环境，请如实填写以下问卷。本问卷严格保密，所有数据仅用于物业内部参考。</p>
+        <button id="start-btn" onclick="startSurvey()">我已了解，开始答题</button>
+    </div>
+
+    <div id="survey-screen" style="display: none;">
+        <div class="header" id="survey-header">
+            <h2 id="header-h2">申仁嘉苑住户满意度调查表</h2>
+        </div>
+        <div class="progress-bar">
+            <span id="progress-text">进度: 1 / 53</span>
+            <span id="glitch-word" style="color: transparent;">&nbsp;</span>
+        </div>
+        
+        <div id="question-area" class="question-block"></div>
+    </div>
+    
+    <div id="ending-screen">
+        <h1 style="color: #aa0000; font-size: 40px; border-bottom: 2px solid #aa0000; padding-bottom: 20px;">欢迎入住■■公寓</h1>
+        <div id="ending-content" class="ending-text-flow"></div>
+    </div>
+</div>
+
+<!-- 音频标签 -->
+<audio id="bgm-normal" src="素材/bgm_normal.mp3" loop></audio>
+<audio id="bgm-creepy1" src="素材/bgm_creepy.mp3" loop></audio>
+<audio id="bgm-creepy2" src="素材/bgm_final.mp3" loop></audio>
+<audio id="se-knock" src="素材/knock.wav"></audio>
+<audio id="se-jumpscare" src="素材/1.wav"></audio>
+<audio id="se-scream" src="素材/scream.wav" loop></audio>
+
+<script>
+    let currentQ = 0;
+    let phase = 0; 
+    let currentPlayingBGM = null;
+    let rejectClicks = 0;
+    let normalAdInterval;
+    let goreAdInterval;
+    let glitchInterval;
+    let jumpScareAdTriggered = false; 
+    
+    const audioSys = {
+        play: function(id) { document.getElementById(id).play().catch(()=>{}); },
+        stopAll: function() {
+            ['bgm-normal', 'bgm-creepy1', 'bgm-creepy2', 'se-knock', 'se-jumpscare', 'se-scream'].forEach(id => {
+                let el = document.getElementById(id);
+                if(el) { el.pause(); el.currentTime = 0; }
+            });
+        },
+        switchBGM: function(newId) {
+            if (currentPlayingBGM === newId) return; 
+            this.stopAll();
+            this.play(newId);
+            currentPlayingBGM = newId;
+        }
+    };
+
+    // --- 经过极其大幅扩容的题库，阶段三分量极重且具体血腥 ---
+    const questions = [
+        // ====== 阶段 0：正常日常篇 (前12题，毫无异样) ======
+        { q: "1. 您对小区大门的安保登记流程是否满意？", opts: ["非常满意", "满意", "一般", "不满意"] },
+        { q: "2. 您对小区内部道路的清洁程度作何评价？", opts: ["非常干净", "尚可", "有待提高"] },
+        { q: "3. 绿化带的修剪与维护是否达到您的预期？", opts: ["是", "否", "没注意"] },
+        { q: "4. 您对物业管家的响应速度是否满意？", opts: ["非常快", "正常", "经常找不到人"] },
+        { q: "5. 您对小区内的垃圾分类驿站设置及清理频率是否满意？", opts: ["很满意，没有异味", "一般", "清理不及时，经常发臭"] },
+        { q: "6. 您觉得小区的非机动车停放区域规划合理吗？", opts: ["规划合理", "停车位不足", "存在乱停乱放现象"] },
+        { q: "7. 物业定期组织的社区文化活动，您有参与过吗？", opts: ["经常参与", "偶尔去看看", "从不参与，不感兴趣"] },
+        { q: "8. 您认为小区关于宠物的管理（如牵引绳、排泄物清理）是否到位？", opts: ["管理得很规范", "一般般", "随处可见排泄物"] },
+        { q: "9. 夜间小区内的路灯照明是否充足？", opts: ["充足", "部分区域较暗", "太黑了"] },
+        { q: "10. 遇到水电报修情况时，维修人员的上门速度能否令您满意？", opts: ["态度好，修得快", "能修好就行", "师傅很不专业"] },
+        { q: "11. 您认为地下车库的排风系统运行是否正常？", opts: ["正常无异味", "偶尔有霉味", "空气十分浑浊"] },
+        { q: "12. 节日期间小区的装饰布置您觉得如何？", opts: ["很温馨", "一般", "不关心"] },
+        
+        // ====== 阶段 1：微诡异，开始感到不对劲 ======
+        { q: "13. 您的邻居是否有时常发出噪音扰民？", opts: ["是", "否"], special: "q9_knock" }, // 按下触发敲门声和场景变化
+        { q: "14. 您有没有觉得，最近楼道里的脚步回声比以前要长得多？", opts: ["没注意", "确实，感觉有人在回声里走", "我不常走楼梯"] },
+        { q: "15. 您近期睡眠质量如何？", opts: ["很好", "容易惊醒", "经常听见水管里有抓挠声"] },
+        { q: "16. 墙壁是否出现不明原因的渗水或霉斑？", opts: ["没有", "有暗红褐色的霉斑", "墙皮下面好像有点肿胀"] },
+        { q: "17. 夜里是否听过楼上掉落弹珠的声音？", opts: ["经常听见，但楼上没有小孩", "没有听过", "越来越大声，像骨节掉在地板上"] },
+        { q: "18. 在乘坐电梯时，是否觉得电梯内部的金属缝隙有异味？", opts: ["有点铁锈味", "每次都不敢靠着墙壁", "像是放了很久的发酵生肉"] },
+        { q: "19. 夜间阳台门是否经常无法锁紧？", opts: ["很紧", "风总能吹开", "门缝有被挤压的脂肪痕迹"] },
+        { q: "20. 近期是否发现下水道经常堵塞？", opts: ["没有", "捞出来一团大团潮湿的黑发", "是混杂着黏液的碎肉块"] },
+        { q: "21. 最近是否发现家里的镜子看起来稍微有些发灰？", opts: ["是起雾了吧", "倒影的表情和我不一样", "镜面里长出了白色的真菌斑点"] },
+        { q: "22. 洗手台下方的水管连接处，有黑色的长条状东西垂下来吗？", opts: ["那是发霉的头发吧", "它刚才缩进去了", "绝对不是死物"] },
+        { q: "23. 对于本小区居住幸福感，请滑动评分（越高越好）：", type: "slider", special: "slider_scare" },
+        
+        { q: "24. 调查进行至此，您是否愿意继续在本小区居住下去？", opts: ["非常愿意", "不太愿意", "拒绝"], special: "reject_loop" },
+
+        // ====== 阶段 2：极度崩坏篇（最长的阶段，完全肉体、排泄物、肢解解剖学描述，文字越发夸张） ======
+        { q: "25. 你的牙龈最近还在出血吗？红色的、温热的，滴在枕头上的。", opts: ["只是牙周炎", "不是出血，是牙槽骨里面在生长其他东西", "缝在口腔里的腐肉又裂开了"], isGore: true },
+        { q: "26. 指甲缝里的肉丝是谁的？是你在反抗时抠下来的，还是从内部撑开指甲长出来的？", opts: ["不是我的肉", "长出了一团纠结在一起的粉色脏器", "血管爆出来的感觉很黏"], isGore: true },
+        { q: "27. 你能在胃壁上摸到他们留下的接缝吗？粗糙的鱼线穿过了你的脂肪层，拉紧。", opts: ["好疼，别拉了", "里面塞满的不是食物", "是活的真菌在我的胃液里发酵膨胀"], isGore: true },
+        { q: "28. 为什么要把眼睛咽下去？食道被撑开的时候你没有感觉到刮擦的痛楚吗？", opts: ["看到了食管壁上附着的蛆虫", "消化液腐蚀视神经的声音很清晰", "它在胃壁内部疯狂地眨眼"] },
+        { q: "29. 呼吸道已经被黄色的孢子块填满了，你现在每次吸气都会喷出细小的绒毛。", opts: ["咳出来的痰是黑红色的组织液", "已经感觉不到肺的存在了", "那些真菌根须扎进了肺泡深处吸血"] },
+        { q: "30. 把大腿根部的皮肤像拉链一样撕开吧。那里是不是塞满了剥落的皮下组织？", opts: ["肌肉纤维一根根暴露在空气里发痛", "白色的骨膜已经被刮花了", "渗出了黏稠发黄的皮脂液"] },
+        { q: "31. 头皮被切开的瞬间没有你想的那么疼，钝刀子磨蹭头骨发出的摩擦音更好听。", opts: ["整个头盖骨被揭开了", "冷空气直接灌进大脑沟壑", "黏稠的脑脊液一直顺着耳朵流进去"] },
+        { q: "32. 肚子里面是什么？红的热的黏的软的白的白的白的白的红的红的", opts: ["已经是一团烂肉泥了", "被一针一线胡乱地绞在了一起", "全掉出来了，拖在地板上像一摊粉色的管子"] },
+        { q: "33. 无尽的恶臭，他在你的墙角腐烂了腐烂了。真菌长满了整个浴室的缝隙。", opts: ["蛆虫在剥落的皮肤底下狂欢", "眼球脱水干瘪地贴在地砖上", "脂肪发酵成了极其刺鼻的甜腻味"] },
+        { q: "34. 脊椎骨里的骨髓被抽干了，现在那里全是空洞和吹过骨缝的阴风。", opts: ["软骨已经被全部碾碎成粉末", "我已经彻底无法站立了，只能靠肉块蠕动", "拿滚烫的铅液灌进去止痛！"] },
+        { q: "35. 他们从下水管把被你切碎的脏器重新拼接了，但他们把大肠连到了气管上。", opts: ["每一次呼吸都在吞咽排泄物", "我发不出声音了，肺里全是粪便和污血", "脖颈处传来了肉壁被撑破的声音"] },
+        { q: "36. 是否被偷窥？透过被挖空的眼眶和腹腔的裂口。", opts: ["视线直接舔舐着暴露的心室", "没有哪怕一点皮肤可以包裹住这种寒冷", "所有粘液都在他们的注视下沸腾"], special: "peep" },
+        { q: "37. 就在背后？还是在你的身体里面？", opts: ["沿着被截断的神经向上爬", "视线在我大肠的褶皱里游走"], special: "peeping_scare" },
+        
+        // 极长文本压迫区，刻意突破排版和选项边框
+        { 
+            q: "38. 左腿的股动脉被一把生锈的手锯粗暴地挑断了。血压的瞬间下降让你感到一阵眩晕，热血如同失控的喷泉一样喷射在墙上，染红了大片白色的真菌群。但你甚至顾不上捂住伤口，因为他们正用镊子从你裂开的膝盖骨缝隙里，一条一条地往外抽拉那些细白的神经束。每拉出半寸，你的腰椎就会传来剧烈的放电感，导致你在满是血浆和脏水的地板上无法控制地像节肢动物一样抽搐打滚。", 
+            opts: [
+                "最让我反胃的不是疼痛，而是膝跳反射完全失控时，能听到髌骨在没有润滑液的情况下相互摩擦碎裂的声音。不要再抽了，断在里面断在里面就好！",
+                "抽出来的神经上还挂着黄色的脂肪粒，他们把那些拉长的神经像结网一样缠绕在生锈的铁丝网上。那真的是我身体里的一部分吗？怎么会这么长？"
+            ], 
+            isHugeGore: true
+        },
+        { 
+            q: "39. 胸腔被巨大的液压钳撑开的那个瞬间，空气中充满了骨骼断裂的回音。两侧的肋骨不规则地断裂，尖锐的骨刺直接扎进了原本完好的肺叶。你可以清楚地看到自己的心脏在没有任何骨骼保护的胸腔内部疯狂、绝望地泵血，它跳得那么快，快到像是一个急于逃离的肉块。但他们没有立刻把它摘除，而是往那团暴露的鲜红肌肉上撒了一大把粗糙的工业盐粒，顺着冠状动脉一直渗进去。", 
+            opts: [
+                "每一次心跳都在搅动那些该死的盐粒！每一次血液循环都变成了顺着全身血管扩散的化学灼烧！整个血管网像被岩浆浇灌了一遍，快挖掉它求求你挖掉它啊！！", 
+                "我能闻到胸腔里那些器官组织因为高度暴露而开始氧化的腥臭味。肺部的真菌在接触到大量新鲜氧气后直接撑破了最后一块好肉爆发出了黄色的毒雾。"
+            ], 
+            isHugeGore: true,
+            breakBox: true // 突破边框专用标记
+        },
+        { 
+            q: "40. 他们把各种不是人类的东西强行塞进了你被掏空的腹部空腔里。生锈的铁片、发臭的碎肉块、还在蠕动的巨大不明虫蛹，还有一条带有锋利倒刺的死猫的腿骨。因为你的表皮已经被剥得只剩极其稀薄的一层结缔组织，你可以透过自己半透明的肚子清楚地看到那些恶心的异物在里面滑动、交缠。虫蛹在你的胃酸里孵化破裂，幼虫直接在内脏碎片里穿梭繁衍。", 
+            opts: [
+                "它们在咬我！里面什么东西在撕咬我缝合处的缝线！整个肚皮快被里面膨胀的死尸气味撑破了，黏稠的黄色脂肪汁液顺着缝隙往外涌...", 
+                "原来人的皮层被撑到极限的时候会变成近乎透明的紫红色。我摸着自己高高隆起的、全是用烂肉和异物填满的肚子，居然感到了一丝诡异的充实。"
+            ], 
+            isHugeGore: true,
+            breakBox: true
+        },
+        { 
+            q: "41. 这是一场没有麻醉的长期艺术品改造。舌骨被连根拔起，声带被剪成了梳子一样的絮状。由于失去了吞咽功能，混合着血水的唾液只能不断地倒灌进肺部引发阵阵猛烈的呛咳，而每次咳嗽都会让气管里的鲜血形成无数个粉红色的血泡。他们开始处理你的面部肌肉，用那种带有倒钩的小刀将你的脸皮从颧骨上一点一点片下来。", 
+            opts: [
+                "眼皮没有了支撑直接耷拉下来盖住了视线，但我能通过失去皮肤保护的裸露神经直接感受空气的流动，脸部的血肉在疯狂发热！",
+                "牙龈彻底暴露在外，每一颗牙齿的根部都渗着浓血。下巴因为脱臼只能扭曲地悬挂着。真美啊，一具完美的骨与血浆交织的尸块集合体。"
+            ], 
+            isHugeGore: true,
+            breakBox: true
+        },
+        
+        { q: "42. 还有最后一点肉挂在上面，刮干净可以吗？", opts: ["全剥掉，一丝不剩地剥下来", "连软骨都剁成肉泥了，全都给你！"] },
+        
+        // 终点
+        { q: "欢迎入住我们的公寓，永远的养料？", opts: ["是", "否"], special: "final_choice" }
+    ];
+
+    // 二、三阶段的极度夸张、极其巨大的随机弹窗库
+    const gorePopupsData = [
+        "你的肠子被拉出来了！太长了，长到可以绕着吊扇缠满两圈，上面还往下滴着屎黄色的发酵脂肪液。每一寸肠壁都被真菌的长毛填满，恶心得想要呕吐！",
+        "手指塞进绞肉机的声音听到了吗？那嘎吱嘎吱的脆响！指骨被碾成了碎末，混杂着新鲜的粉色静脉血从金属网孔里一条条挤压出来，这是最完美的人肉面条！",
+        "头皮正在被活活撕掉！没有打麻药！刀尖划过头骨的酸涩声音顺着骨传导直接响彻大脑，后颈的皮肤拉链般被扯开，冷风倒灌进满是脑液的沟壑中，痛到发狂！！",
+        "你试图去抓挠那些被剥去皮肤的大腿肌肉！全是红色的一丝一丝的肌纤维！你的指甲死死抠进了发白的骨膜里面，抠出大团大团的暗红色血块，根本停不下来！",
+        "眼珠子被镊子硬生生夹了出来！视神经就像带血的鞋带一样被猛地扯断！你现在居然能用悬挂在外面的眼球看清自己深坑般的空荡眼眶，里面挤满了蠕动的白蛆！"
+    ];
+
+    function processTextHTML(text, forcePhase = null) {
+        let curPhase = forcePhase !== null ? forcePhase : phase;
+        if (curPhase < 1) return text;
+        
+        let htmlResult = "";
+        const zalgoChars = ['\u030d', '\u030e', '\u0304', '\u033f', '\u0311', '\u0306', '\u0310', '\u0352', '\u0357', '\u0351', '\u0324', '\u0316', '\u0317', '\u031c', '\u031d', '\u0320', '\u0321', '\u0342', '\u0343', '\u0328', '\u0334'];
+        
+        let inTag = false;
+        for (let i = 0; i < text.length; i++) {
+            let char = text[i];
+            
+            if(char === '<') { inTag = true; htmlResult += char; continue; }
+            if(char === '>') { inTag = false; htmlResult += char; continue; }
+            if(inTag) { htmlResult += char; continue; }
+
+            let chance = curPhase === 1 ? 0.3 : 0.8; 
+            if (curPhase >= 1 && Math.random() < chance && char !== " " && char !== "。") {
+                let amount = Math.floor(Math.random() * (curPhase === 2 ? 5 : 2)) + 1;
+                for(let j=0; j<amount; j++) char += zalgoChars[Math.floor(Math.random()*zalgoChars.length)];
+            }
+
+            if (curPhase >= 1 && char !== " " && char !== "。") {
+                let yOffset = curPhase === 2 ? (Math.random() * 10 - 5) : 0;
+                let rotate = curPhase === 2 ? (Math.random() * 16 - 8) : 0;
+                let opacityStr = curPhase === 2 && Math.random()>0.8 ? 'opacity:0.8; text-shadow:0 0 5px red;' : '';
+                htmlResult += `<span style="display:inline-block; transform: translateY(${yOffset}px) rotate(${rotate}deg); ${opacityStr}">${char}</span>`;
+            } else {
+                htmlResult += char;
+            }
+        }
+        return htmlResult;
+    }
+
+    function applyPhaseStyles() {
+        const root = document.documentElement;
+        root.className = `phase-${phase}`;
+        
+        const container = document.getElementById('main-container');
+        if (phase === 0) {
+            container.style.backgroundColor = '#fff';
+            container.style.color = '#333';
+            container.style.borderTopColor = '#aa0000';
+            document.getElementById('header-h2').style.color = '#aa0000';
+        } else if (phase === 1) {
+            if(!glitchInterval) startGlitchProgress();
+            container.style.backgroundColor = '#110a0a';
+            container.style.color = '#bbb';
+            container.style.borderTopColor = '#800000';
+            document.getElementById('header-h2').style.color = '#cc0000';
+        } else if (phase === 2) {
+            container.style.backgroundColor = '#050000';
+            container.style.color = '#900000';
+            container.style.borderTopColor = 'black';
+            document.getElementById('header-h2').style.color = '#ff0000';
+        }
+    }
+
+    function startSurvey() {
+        document.getElementById('intro-screen').style.display = 'none';
+        document.getElementById('survey-screen').style.display = 'block';
+        audioSys.switchBGM('bgm-normal');
+        applyPhaseStyles();
+        renderQuestion();
+        startNormalAds();
+        startGoreAds();
+    }
+
+    function renderQuestion() {
+        const qData = questions[currentQ];
+        if(!qData) return;
+
+        document.getElementById('blood-overlay').style.opacity = 0;
+        rejectClicks = 0;
+        applyPhaseStyles();
+
+        document.getElementById('progress-text').innerHTML = processTextHTML(`进度: ${Math.min(currentQ+1, questions.length)} / ${questions.length}`);
+        
+        const qArea = document.getElementById('question-area');
+        qArea.innerHTML = '';
+        qArea.className = (phase === 2) ? 'question-block tremble-mild' : 'question-block';
+
+        const qTitle = document.createElement('div');
+        qTitle.className = 'question-title';
+        if(qData.isHugeGore) qTitle.classList.add('gore-text-huge');
+        if(qData.breakBox) qTitle.classList.add('break-box'); // 极度突破外框
+        
+        qTitle.innerHTML = processTextHTML(qData.q);
+        
+        if(phase >= 1 && !qData.isHugeGore) {
+            qTitle.onmouseenter = function() {
+                const creepyPrompts = ["它们在看你的后背", "为什么还不流血", "快切开", "撕下来撕下来！", "嘶...啊..."];
+                this.innerHTML = processTextHTML(creepyPrompts[Math.floor(Math.random()*creepyPrompts.length)]);
+                this.style.color = "red";
+            };
+        }
+        qArea.appendChild(qTitle);
+
+        const optionsDiv = document.createElement('div');
+        optionsDiv.className = 'options';
+
+        if(qData.type === 'slider') {
+            const sliderCont = document.createElement('div');
+            sliderCont.className = 'slider-container';
+            const valBox = document.createElement('div');
+            valBox.className = 'slider-val-box';
+            valBox.innerText = '0';
+            
+            const slider = document.createElement('input');
+            slider.type = 'range';
+            slider.min = '0'; slider.max = '100'; slider.value = '0';
+            
+            const creepyNums = ["疼死了！", "断了全断了", "它在血管里爬", "跑不掉！", "肉全碎了"];
+            slider.oninput = function(e) {
+                let val = parseInt(e.target.value);
+                if(Math.random() > 0.7 && val < 90) {
+                    valBox.innerHTML = processTextHTML(creepyNums[Math.floor(Math.random()*creepyNums.length)]);
+                    valBox.style.fontSize = '30px';
+                    valBox.style.color = '#fff';
+                } else {
+                    valBox.innerText = val;
+                    valBox.style.fontSize = (24 + val/2) + 'px'; 
+                    valBox.style.color = val > 90 ? 'red' : '#aa0000';
+                }
+                if(val === 100) { slider.disabled = true; triggerJumpScareSlider(); }
+            };
+            sliderCont.appendChild(valBox);
+            sliderCont.appendChild(slider);
+            optionsDiv.appendChild(sliderCont);
+        } else {
+            let hoverTimeout;
+            qData.opts.forEach(optText => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                if(qData.isHugeGore) btn.classList.add('gore-text-huge');
+                if(qData.breakBox) btn.classList.add('break-box'); // 突破束缚外放
+                
+                btn.innerHTML = processTextHTML(optText);
+                
+                btn.onclick = () => {
+                    if (qData.special === 'q9_knock' && optText === '是') {
+                        handleQ9Knock(btn); return; 
+                    } 
+                    if (qData.special === 'reject_loop') {
+                        if (optText === '拒绝' || optText === '不太愿意') {
+                            handleRejectLoop(btn); return; 
+                        } else if (optText === '非常愿意') {
+                            phase = 2; audioSys.switchBGM('bgm-creepy2');
+                        }
+                    }
+                    if (qData.special === 'final_choice' && optText !== '否') {
+                        triggerEnding(); return;
+                    }
+                    nextQuestion();
+                };
+
+                if(qData.special === 'final_choice' && optText === '否') {
+                    btn.onmouseenter = function() {
+                        const ca = document.getElementById('main-container');
+                        this.style.position = 'absolute';
+                        this.style.left = (Math.random() * (ca.clientWidth - 100)) + 'px';
+                        this.style.top = (Math.random() * (ca.clientHeight - 80)) + 'px';
+                        rejectClicks++;
+                        if(rejectClicks > 6) { this.style.display = 'none'; fillScreenWithYes(); }
+                    };
+                    btn.onclick = function() { this.style.display = 'none'; fillScreenWithYes(); };
+                } else if(phase >= 1 && !qData.isHugeGore) {
+                    btn.onmouseenter = function() {
+                        hoverTimeout = setTimeout(() => {
+                            btn.innerHTML = processTextHTML("快割下来");
+                            btn.style.color = "#a00";
+                        }, 1200);
+                    };
+                    btn.onmouseleave = function() { clearTimeout(hoverTimeout); };
+                }
+                
+                optionsDiv.appendChild(btn);
+            });
+        }
+        
+        qArea.appendChild(optionsDiv);
+
+        if(phase === 2 && !qData.special && !qData.isHugeGore) makeOptionsRun(optionsDiv);
+        if(qData.special === 'peep') enablePeepHole();
+        if(qData.special === 'peeping_scare') triggerPeepScare();
+    }
+
+    function nextQuestion() {
+        if(currentQ < questions.length - 1) {
+            currentQ++; renderQuestion();
+        }
+    }
+
+    function hardResetSurvey() {
+        audioSys.stopAll();
+        currentPlayingBGM = null;
+        audioSys.switchBGM('bgm-normal');
+        
+        clearInterval(glitchInterval);
+        glitchInterval = null;
+        
+        currentQ = 0; phase = 0; rejectClicks = 0;
+        
+        document.getElementById('blood-overlay').style.opacity = 0;
+        document.documentElement.className = 'phase-0';
+        
+        renderQuestion();
+    }
+
+    function handleQ9Knock(btnElem) {
+        btnElem.style.backgroundColor = "red";
+        btnElem.style.color = "white";
+        document.getElementById('main-container').classList.add('shaking');
+        
+        audioSys.switchBGM('bgm-creepy1');
+        audioSys.play('se-knock');
+        phase = 1;
+        applyPhaseStyles();
+        
+        setTimeout(() => { document.getElementById('main-container').classList.remove('shaking'); nextQuestion(); }, 2000);
+    }
+
+    function startGlitchProgress() {
+        const words = ["挖掉眼睛", "全在喷血", "哭泣，哭泣", "绞肉的声音", "割开肚子了", "黏糊糊", "发黄的皮脂液", "切碎的手指"];
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()_+";
+        const gBox = document.getElementById('glitch-word');
+        const pText = document.getElementById('progress-text');
+        
+        glitchInterval = setInterval(() => {
+            pText.style.display = 'none';
+            gBox.style.color = 'red';
+            if(Math.random() > 0.4) {
+                let garble = "";
+                for(let i=0; i<10; i++) garble += chars.charAt(Math.floor(Math.random()*chars.length));
+                gBox.innerHTML = processTextHTML(garble);
+            } else {
+                gBox.innerHTML = processTextHTML(words[Math.floor(Math.random()*words.length)]);
+            }
+            gBox.classList.add('glitch-text');
+            setTimeout(() => {
+                pText.style.display = 'block'; gBox.style.color = 'transparent'; gBox.innerText = ' '; gBox.classList.remove('glitch-text');
+            }, 800); 
+        }, 1200);
+    }
+
+    function triggerJumpScareSlider() {
+        const valBox = document.querySelector('.slider-val-box');
+        valBox.innerHTML = "<h1>幸 福 的 烂 肉</h1>";
+        const jsLayer = document.getElementById('jumpscare-layer');
+        jsLayer.style.display = 'flex';
+        audioSys.play('se-jumpscare');
+        for(let i=0; i<40; i++) {
+            let h = document.createElement('div');
+            h.className = 'happy-text'; h.innerText = '绝 对 幸 福';
+            h.style.left = Math.random() * 100 + 'vw'; h.style.top = Math.random() * 100 + 'vh'; h.style.animationDelay = Math.random() + 's';
+            jsLayer.appendChild(h);
+        }
+        setTimeout(() => { jsLayer.style.display = 'none'; document.querySelectorAll('.happy-text').forEach(e=>e.remove()); nextQuestion(); }, 1500);
+    }
+
+    function handleRejectLoop(btnElem) {
+        rejectClicks++;
+        btnElem.style.backgroundColor = `rgb(${255 - rejectClicks*40}, 0, 0)`;
+        btnElem.innerHTML = processTextHTML("不 准 逃，给我烂在里面！");
+        document.getElementById('blood-overlay').style.opacity = rejectClicks * 0.25;
+        if(rejectClicks >= 4) {
+            btnElem.disabled = true;
+            document.getElementById('blood-overlay').style.opacity = 1;
+            let sAudio = document.getElementById('se-scream'); sAudio.loop = false; sAudio.currentTime = 0; sAudio.play();
+            setTimeout(() => hardResetSurvey(), 2000);
+        }
+    }
+
+    function enablePeepHole() { document.getElementById('peep-hole').style.opacity = 1; }
+    
+    function triggerPeepScare() {
+        setTimeout(() => {
+            const jsLayer = document.getElementById('jumpscare-layer');
+            jsLayer.style.display = 'flex'; jsLayer.style.zIndex = 50; 
+            audioSys.play('se-jumpscare');
+            setTimeout(() => { jsLayer.style.display = 'none'; jsLayer.style.zIndex = 9999; document.getElementById('peep-hole').style.opacity = 0; nextQuestion(); }, 500);
+        }, 1500); 
+    }
+
+    function makeOptionsRun(container) {
+        const btns = container.querySelectorAll('.option-btn');
+        let moveTimer = setInterval(() => {
+            if(!document.body.contains(container)) { clearInterval(moveTimer); return; }
+            btns.forEach(btn => {
+                let dx = (Math.random() * 14 - 7); let dy = (Math.random() * 14 - 7);
+                btn.style.transform = `translate(${dx}px, ${dy}px) rotate(${Math.random()*4-2}deg)`;
+            });
+        }, 150);
+    }
+
+    function fillScreenWithYes() {
+        const qArea = document.getElementById('question-area');
+        const cont = document.getElementById('main-container');
+        document.querySelector('.question-title').style.display = 'none'; 
+        qArea.innerHTML = '';
+        cont.style.padding = '0'; cont.style.overflow = 'hidden'; 
+        qArea.style.display = 'flex'; qArea.style.flexWrap = 'wrap'; qArea.style.justifyContent = 'center';
+        qArea.style.alignItems = 'center'; qArea.style.margin = '0'; qArea.style.backgroundColor = '#000';
+        for(let i=0; i<180; i++){
+            let btn = document.createElement('button');
+            btn.className = 'option-btn tremble-mild';
+            btn.style.margin = '0px'; btn.style.borderRadius = '0';
+            btn.style.width = (Math.random() * 120 + 40) + 'px'; btn.style.height = (Math.random() * 60 + 40) + 'px';
+            btn.style.fontSize = (Math.random() * 30 + 16) + 'px'; btn.style.fontWeight = 'bold';
+            if(Math.random() > 0.3) { btn.style.backgroundColor = '#aa0000'; btn.style.color = '#fff'; } 
+            else { btn.style.backgroundColor = '#fff'; btn.style.color = '#aa0000'; }
+            btn.style.border = '1px solid black';
+            btn.innerHTML = processTextHTML('是 是 是'); btn.onclick = triggerEnding;
+            qArea.appendChild(btn);
+        }
+    }
+
+    function startNormalAds() {
+        const ad = document.getElementById('normal-ad');
+        const closeBtn = document.getElementById('normal-ad-close');
+        
+        normalAdInterval = setInterval(() => {
+            if(phase >= 1) { ad.style.display = 'none'; clearInterval(normalAdInterval); return; }
+            if(ad.style.display === 'block') return; 
+            
+            const ads = [
+                { title: "本小区特惠宽带！", desc: "1000M极速网络，首年仅需998元！包含免费光猫更换。" },
+                { title: "管道专业疏通", desc: "极速上门解决厨房/卫生间堵塞，不通不收费，明码标价。" },
+                { title: "二手车回收", desc: "高价上门回收各类电动车、自行车，废旧电器也不嫌弃。" },
+                { title: "纯净水配送", desc: "订水热线：xxxx-xxxx，买十桶送两桶，一小时内送达楼上。" }
+            ];
+            let randAd = ads[Math.floor(Math.random()*ads.length)];
+            document.getElementById('normal-ad-title').innerText = randAd.title;
+            document.getElementById('normal-ad-desc').innerHTML = `<p>${randAd.desc}</p>`;
+            closeBtn.onclick = () => { ad.style.display = 'none'; };
+            ad.style.display = 'block';
+        }, 12000); 
+    }
+
+    // 全方位乱飞的巨大血腥弹窗生成器
+    function startGoreAds() {
+        goreAdInterval = setInterval(() => {
+            if (phase < 1) return;
+            
+            if(!jumpScareAdTriggered && Math.random() > 0.7) {
+                // 生成含有跳杀图片的一次性特殊弹窗
+                jumpScareAdTriggered = true;
+                createBloodPopup("撕下皮肉，看着我！！", `<img src="素材/cheche.gif" width="100%" height="200" style="object-fit:cover;">`, true);
+            } else if (phase >= 2 && Math.random() > 0.4) {
+                // 阶段2以后疯狂弹出随机文字
+                let text = gorePopupsData[Math.floor(Math.random()*gorePopupsData.length)];
+                createBloodPopup("肢解赠礼：", processTextHTML(text, 2), false);
+            }
+        }, 8000); // 极度频繁的干扰
+    }
+
+    function createBloodPopup(titleHtml, contentHtml, isJumpscare) {
+        let popup = document.createElement('div');
+        // 大尺寸弹窗
+        let w = Math.floor(Math.random() * 200 + 350); 
+        popup.style.width = w + 'px';
+        popup.style.position = 'fixed';
+        popup.style.zIndex = '9999';
+        popup.style.backgroundColor = 'black';
+        popup.style.border = '4px solid red';
+        popup.style.boxShadow = '0 0 50px red';
+        popup.style.padding = '20px';
+        popup.style.color = 'red';
+        popup.className = 'tremble-mild';
+        
+        // 坐标全屏随机
+        let left = Math.random() * (window.innerWidth - w - 40);
+        let top = Math.random() * (window.innerHeight - 300 - 40);
+        popup.style.left = left + 'px';
+        popup.style.top = top + 'px';
+
+        let closeBtn = document.createElement('div');
+        closeBtn.innerHTML = "把它塞回去";
+        closeBtn.style.float = "right";
+        closeBtn.style.color = "red";
+        closeBtn.style.border = "1px solid red";
+        closeBtn.style.cursor = "pointer";
+        closeBtn.style.fontWeight = "bold";
+        closeBtn.style.padding = "2px 5px";
+        closeBtn.onclick = () => {
+            popup.remove();
+            if (isJumpscare) {
+                const jsLayer = document.getElementById('jumpscare-layer');
+                jsLayer.style.display = 'flex';
+                audioSys.play('se-jumpscare');
+                setTimeout(()=>jsLayer.style.display='none', 400);
+            } else if(Math.random()>0.7) {
+                audioSys.play('se-scream');
+            }
+        };
+
+        let title = document.createElement('h2');
+        title.innerHTML = titleHtml;
+        title.style.margin = "0 0 10px 0";
+        title.style.fontSize = "26px";
+
+        let desc = document.createElement('div');
+        desc.style.fontSize = "18px";
+        desc.style.lineHeight = "1.5";
+        desc.style.textAlign = "justify";
+        desc.style.wordBreak = "break-all";
+        desc.innerHTML = contentHtml;
+
+        popup.appendChild(closeBtn);
+        popup.appendChild(title);
+        popup.appendChild(desc);
+        document.body.appendChild(popup);
+    }
+
+    function triggerEnding() {
+        clearInterval(glitchInterval);
+        clearInterval(goreAdInterval);
+        document.querySelectorAll('.ad-popup').forEach(e=>e.style.display='none');
+        document.getElementById('survey-screen').style.display = 'none';
+        
+        const endScreen = document.getElementById('ending-screen');
+        endScreen.style.display = 'block';
+        
+        audioSys.play('se-knock');
+        setTimeout(() => {
+            let screamAudio = document.getElementById('se-scream');
+            screamAudio.loop = true; 
+            screamAudio.currentTime = 0;
+            screamAudio.play();
+        }, 1000);
+        
+        const baseText = "申仁嘉苑位于城市核心区域，交通便利。小区内部绿树成荫，设施齐备。致力于为每一位业主打造温馨、舒适、且充满生机的理想家园。在这里，您将拥有全新的邻里关系，物业管家24小时贴心守候。我们的安保系统经过全面升级，绝对没有死角。空气清新，每一口呼吸都让人感到精神焕发。我们会好好保管您的所有数据，将所有的皮肉内脏全部分解再利用！欢迎您永远居住在这里，直到彻底烂在这个坑里......";
+        const horrorWords = ["献上皮肉", "挤碎大脑", "剥夺器官", "抽干脊髓", "开膛破肚", "脂肪外溢", "骨粉", "吃掉你的内脏", "全部绞碎"];
+        const endContent = document.getElementById('ending-content');
+        
+        let charIndex = 0;
+        function typeWriter() {
+            if(charIndex < baseText.length) {
+                let char = baseText.charAt(charIndex);
+                endContent.innerHTML += processTextHTML(char, 2); 
+                charIndex++;
+                
+                if(Math.random() > 0.93) {
+                    let popup = document.createElement('span');
+                    popup.style.position = 'fixed';
+                    popup.style.left = (Math.random()*80 + 5) + 'vw';
+                    popup.style.top = (Math.random()*80 + 5) + 'vh';
+                    popup.style.fontSize = (Math.random()*60 + 40) + 'px';
+                    popup.style.color = 'red';
+                    popup.style.fontWeight = 'bold';
+                    popup.style.zIndex = '9999';
+                    popup.style.pointerEvents = 'none';
+                    popup.innerHTML = processTextHTML(horrorWords[Math.floor(Math.random()*horrorWords.length)], 2);
+                    document.body.appendChild(popup);
+                    setTimeout(()=>popup.remove(), 250);
+                }
+                
+                endContent.scrollTop = endContent.scrollHeight;
+                setTimeout(typeWriter, 30);
+            }
+        }
+        typeWriter();
+    }
+</script>
+</body>
+</html>
